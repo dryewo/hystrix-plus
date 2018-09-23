@@ -149,29 +149,31 @@ Now, when any Hystrix command throws an exception, the full call stack will be v
 
 ```
 => (outer3)
-                                                                              ...                   
-                                                                    user/eval2569      REPL Input   
-                                                                              ...                   
-                                                  hystrix-plus.core-test/eval2573  core_test.clj: 24
-                                                    hystrix-plus.core-test/outer3  core_test.clj: 20
-                                                    hystrix-plus.core-test/outer2  core_test.clj: 19
-                                                    hystrix-plus.core-test/outer1  core_test.clj: 18
-                                                                              ...                   
-                                       hystrix-plus.core-test/eval2542/my-command  core_test.clj: 15
-                                                                              ...                   
-hystrix-plus.core/enable-full-command-stack-traces!/execute-and-join-stack-traces       core.clj: 44
-                                                                              ...                   
-                                       hystrix-plus.core-test/eval2542/my-command  core_test.clj: 16
-                                                    hystrix-plus.core-test/inner1  core_test.clj: 13
-                                                    hystrix-plus.core-test/inner2  core_test.clj: 12
-                                                    hystrix-plus.core-test/inner3  core_test.clj: 11
-                                                                              ...                   
+                                            ...                   
+                                  user/eval4088      REPL Input   
+                                            ...                   
+                hystrix-plus.core-test/eval4092  core_test.clj: 26
+                  hystrix-plus.core-test/outer3  core_test.clj: 20
+                  hystrix-plus.core-test/outer2  core_test.clj: 19
+                  hystrix-plus.core-test/outer1  core_test.clj: 18
+                                            ...                   
+     hystrix-plus.core-test/eval3988/my-command  core_test.clj: 15
+                                            ...                   
+hystrix-plus.core/execute-and-join-stack-traces       core.clj: 37
+                                            ...                   
+     hystrix-plus.core-test/eval3988/my-command  core_test.clj: 16
+                  hystrix-plus.core-test/inner1  core_test.clj: 13
+                  hystrix-plus.core-test/inner2  core_test.clj: 12
+                  hystrix-plus.core-test/inner3  core_test.clj: 11
+                                            ...                   
                         java.lang.ArithmeticException: Divide by zero
 com.netflix.hystrix.exception.HystrixRuntimeException: hystrix-plus.core-test/my-command failed and no fallback available.
-          failureType: #object[com.netflix.hystrix.exception.HystrixRuntimeException$FailureType 0x77688a30 "COMMAND_EXCEPTION"]
+          failureType: #object[com.netflix.hystrix.exception.HystrixRuntimeException$FailureType 0x14ff2fc4 "COMMAND_EXCEPTION"]
     implementingClass: com.netflix.hystrix.core.proxy$com.netflix.hystrix.HystrixCommand$ff19274a
-              clojure.lang.Compiler$CompilerException: com.netflix.hystrix.exception.HystrixRuntimeException: hystrix-plus.core-test/my-command failed and no fallback available., compiling:(/projects/hystrix-plus/test/hystrix_plus/core_test.clj:24:3)
+              clojure.lang.Compiler$CompilerException: com.netflix.hystrix.exception.HystrixRuntimeException: hystrix-plus.core-test/my-command failed and no fallback available., compiling:(/projects/hystrix-plus/test/hystrix_plus/core_test.clj:26:7)
 ```
+
+The `hystrix-plus.core/execute-and-join-stack-traces` line in the middle indicates that the stack trace was manipulated in some way.  
 
 ## Implementation details
 
@@ -192,7 +194,7 @@ catches all exceptions thrown by `AbstractCommand.execute()` and stitches togeth
 and the current thread before rethrowing:
 
 ```clj
-(fn execute-and-join-stack-traces [definition & args]
+(defn execute-and-join-stack-traces [definition & args]
   (try
     (.execute ^HystrixExecutable (apply com.netflix.hystrix.core/instantiate definition args))
     (catch Exception e
@@ -203,7 +205,7 @@ and the current thread before rethrowing:
 It updates the stack trace of the [innermost exception][exception wrapping], `java.lang.ArithmeticException` in the example above
 (because `io.aviso/pretty` only prints the innermost exception's stack trace).
 
-Please check out `hystrix-plus.core/enable-full-command-stack-traces!` function
+Please check out `hystrix-plus.core/execute-and-join-stack-traces` function
 [source code](https://github.com/dryewo/hystrix-plus/blob/master/src/hystrix_plus/core.clj) for more details.
 
 

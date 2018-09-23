@@ -11,7 +11,7 @@
 
 
 ;; To exclude this library's functions from consideration when comparing and joining stack traces
-(def frames-to-skip 4)
+(def frames-to-skip 5)
 
 
 (defn extend-stack-trace [there-stack-trace]
@@ -34,11 +34,13 @@
       (.setStackTrace innermost-exception (extend-stack-trace (.getStackTrace innermost-exception))))))
 
 
+(defn execute-and-join-stack-traces [definition & args]
+  (try
+    (.execute ^HystrixExecutable (apply com.netflix.hystrix.core/instantiate definition args))
+    (catch Exception e
+      (extend-cross-thread-stack-trace! e)
+      (throw e))))
+
+
 (defn enable-full-command-stack-traces! []
-  (alter-var-root #'com.netflix.hystrix.core/execute
-                  (constantly (fn execute-and-join-stack-traces [definition & args]
-                                (try
-                                  (.execute ^HystrixExecutable (apply com.netflix.hystrix.core/instantiate definition args))
-                                  (catch Exception e
-                                    (extend-cross-thread-stack-trace! e)
-                                    (throw e)))))))
+  (alter-var-root #'com.netflix.hystrix.core/execute (constantly execute-and-join-stack-traces)))

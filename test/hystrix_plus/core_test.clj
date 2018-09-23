@@ -15,7 +15,7 @@
 (defcommand my-command []
   (inner1))
 
-(defn outer1 [] @(com.netflix.hystrix.core/queue #'my-command))
+(defn outer1 [] (my-command))
 (defn outer2 [] (outer1))
 (defn outer3 [] (outer2))
 
@@ -25,7 +25,8 @@
     (try
       (outer3)
       (catch Exception e
-        (is (some #(= "hystrix_plus.core_test$outer1" (.getClassName %)) (.getStackTrace e)))))))
+        (is (some #(= "hystrix_plus.core_test$outer1" (.getClassName %))
+                  (.getStackTrace (get-innermost-exception e))))))))
 
 
 (deftest about-isSameThreadThrowable
