@@ -5,7 +5,7 @@
 A companion library for [hystrix-clj] to enhance `HystrixRuntimeException`'s stack traces.
 
 ```clj
-[me.dryewo/hystrix-plus "0.0.0"]
+[me.dryewo/hystrix-plus "0.1.0"]
 ```
 
 Please refer to _CHANGELOG.md_ for latest changes.

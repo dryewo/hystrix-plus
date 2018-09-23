@@ -1,4 +1,4 @@
-(defproject me.dryewo/hystrix-plus "0.0.0"
+(defproject me.dryewo/hystrix-plus "0.1.0"
   :description "Stack trace enhancer for hystrix-clj."
   :url "https://github.com/dryewo/hystrix-plus"
   :license {:name "Eclipse Public License"
