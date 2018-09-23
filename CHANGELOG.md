@@ -8,13 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
-- _CHANGELOG.md_ created.
-### Changed
-- Something has been changed.
-### Fixed
-- Something has been fixed.
-### Removed
-- Something has been removed.
+- Implemented functionality to automatically extend stack traces of exceptions that originated in another thread.
 
 
 [Unreleased]: https://github.com/dryewo/hystrix-plus/compare/0.0.0...HEAD
