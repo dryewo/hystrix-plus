@@ -23,8 +23,6 @@ Just add this library and put this call somewhere next to `(defn -main)`:
 
 This will make stack traces from exceptions thrown by Hystrix commands include both caller's and command's threads' stack frames.
 
-Read next the section for the rationale.
-
 ## Rationale
 
 Please get familiar with [Hystrix] purpose and main concepts before reading this.
@@ -76,13 +74,13 @@ was called by `outer1`, which in turn was called by `outer2`, which in turn was 
 ### Semi-workaround
 
 If instead of directly executing the command you `queue` it (obtaining a `Future`) and then immediately dereference it,
-the resulting exception will include `outer1`, `outer2` and `outer3` in the stack trace of one of the wrapping exception's stack trace.
+the resulting exception will include `outer1`, `outer2` and `outer3` in the stack trace of one of the wrapping exceptions.
 
 ```clj
 (defn outer1 [] @(com.netflix.hystrix.core/queue #'my-command))
 ```
 
-`outer1`, `outer2` and `outer3` are not visible in [io.aviso/pretty] printout because it does not show the stack trace of `ExecutionException`.
+However, `outer1`, `outer2` and `outer3` are still not visible in [io.aviso/pretty] printout, because it does not show the stack trace of `ExecutionException`.
 
 ```
 => (outer3)
@@ -100,7 +98,7 @@ com.netflix.hystrix.exception.HystrixRuntimeException: hystrix-plus.core-test/my
               clojure.lang.Compiler$CompilerException: java.util.concurrent.ExecutionException: Observable onError, compiling:(/projects/hystrix-plus/test/hystrix_plus/core_test.clj:24:3)
 ```
 
-With standard exception printing you can see `outer1`, `outer2` and `outer3`:
+With standard exception printing you can see `outer1`, `outer2` and `outer3` (~75% of the output omitted for brevity):
 
 ```
 java.util.concurrent.ExecutionException: Observable onError, compiling:(/projects/hystrix-plus/test/hystrix_plus/core_test.clj:24:3)
@@ -130,12 +128,14 @@ Caused by: java.lang.ArithmeticException: Divide by zero
 	...
 ```
 
-~75% of the output omitted for brevity. This is better than nothing, but still doesn't make it too easy to find how the command was called.
+Note that the order of functions appears "inside-out".  
+This is better than nothing, but still doesn't make it too easy to find how the command was called.
 
 So, this workaround has drawbacks:
 
-* Is not compatible with [io.aviso/pretty], making it hard to read through verbose standard printout.
-* Requires to use `com.netflix.hystrix.core/queue` explicitly instead of just calling commands as functions in order to get full stack trace information.
+* It is not compatible with [io.aviso/pretty], making it hard to read through verbose standard printout.
+* It requires to use `@(com.netflix.hystrix.core/queue #'my-command ...)` form instead of `(my-command ...)`
+  in order to get full stack trace information.
 
 ### Solution
 
@@ -175,8 +175,21 @@ com.netflix.hystrix.exception.HystrixRuntimeException: hystrix-plus.core-test/my
 
 ## Implementation details
 
-This library achieves the effect by replacing implementation of `com.netflix.hystrix.core/execute` with a function that
-stitches together stack traces from the command's thread and the current thread:
+When you call a command as a function:
+
+```clj
+(my-command ...)
+```
+
+, internally it gets translated to a call to `com.netflix.hystrix.core/execute`:
+
+```clj
+(com.netflix.hystrix.core/execute #'my-command ...)
+```
+
+This library achieves the effect by replacing the implementation of `com.netflix.hystrix.core/execute` with a function that
+catches all exceptions thrown by `AbstractCommand.execute()` and stitches together stack traces from the command's thread
+and the current thread before rethrowing:
 
 ```clj
 (fn execute-and-join-stack-traces [definition & args]
