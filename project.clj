@@ -8,9 +8,9 @@
             [lein-shell "0.5.0"]
             [lein-ancient "0.6.15"]
             [lein-changelog "0.3.2"]
-            [io.aviso/pretty "0.1.34"]]
+            [io.aviso/pretty "0.1.35"]]
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.9.0"]
-                                  [io.aviso/pretty "0.1.34"]]}}
+                                  [io.aviso/pretty "0.1.35"]]}}
   :deploy-repositories [["releases" :clojars]]
   :aliases {"update-readme-version" ["shell" "sed" "-i" "s/\\\\[me\\.dryewo\\\\/hystrix-plus \"[0-9.]*\"\\\\]/[me\\.dryewo\\\\/hystrix-plus \"${:version}\"]/" "README.md"]}
   :java-source-paths ["src"]
